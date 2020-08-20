@@ -46,7 +46,7 @@ pipeline {
      }
      steps {
       sh ' mvn checkstyle:checkstyle'
-      step([$class: 'CheckStylePublisher',
+      step([
        //canRunOnFailed: true,
        defaultEncoding: '',
        healthy: '100',
