@@ -6,7 +6,7 @@ pipeline {
   // This can be http or https
   NEXUS_PROTOCOL = "http"
   // Where your Nexus is running. In my case:
-  NEXUS_URL = "172.22.100.24:8081"
+  NEXUS_URL = "http://6262565cf648.ngrok.io"
   // Repository where we will upload the artifact
   NEXUS_REPOSITORY = "maven-snapshots"
   // Jenkins credential id to authenticate to Nexus OSS
@@ -212,13 +212,13 @@ pipeline {
      withEnv(["ANSIBLE_HOST_KEY_CHECKING=False", "APP_NAME=${artifactId}", "repoPath=${repoPath}", "version=${version}"]) {
       sh '''
       
-        curl --silent "http://$NEXUS_URL/repository/maven-public/${repoPath}/${version}/maven-metadata.xml" > tmp &&
+        curl --silent "http://$NEXUS_URL/repository/maven-snapshots/${repoPath}/${version}/maven-metadata.xml" > tmp &&
         egrep '<value>+([0-9\\-\\.]*)' tmp > tmp2 &&
         tail -n 1 tmp2 > tmp3 &&
         tr -d "</value>[:space:]" < tmp3 > tmp4 &&
         REPO_VERSION=$(cat tmp4) &&
 
-        export APP_SRC_URL="http://${NEXUS_URL}/repository/maven-public/${repoPath}/${version}/${APP_NAME}-${REPO_VERSION}.war" &&
+        export APP_SRC_URL="http://${NEXUS_URL}/repository/maven-snapshots/${repoPath}/${version}/${APP_NAME}-${REPO_VERSION}.war" &&
         ansible-playbook -v -i ./ansible_provisioning/hosts --extra-vars "host=staging" ./ansible_provisioning/playbook.yml 
 
        '''
