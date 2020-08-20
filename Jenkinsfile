@@ -98,33 +98,28 @@ pipeline {
   }
   stage('Code Quality Analysis') {
    parallel {
-    stage('PMD') {
-     agent {
-      docker {
-       image 'maven:3.6.0-jdk-8-alpine'
-       args '-v /root/.m2/repository:/root/.m2/repository'
-       reuseNode true
-      }
-     }
-     steps {
-      sh ' mvn pmd:pmd'
-      // using pmd plugin
-      step([$class: 'PmdPublisher', pattern: '**/target/pmd.xml'])
-     }
-    }
-    stage('Findbugs') {
-     agent {
-      docker {
-       image 'maven:3.6.0-jdk-8-alpine'
-       args '-v /root/.m2/repository:/root/.m2/repository'
-       reuseNode true
-      }
-     }
-     steps {
-      sh ' mvn findbugs:findbugs'
-      // using findbugs plugin
-      findbugs pattern: '**/target/findbugsXml.xml'
-     }
+    stage('Next Plugin Analysis'){
+          agent {
+            docker {
+            image 'maven:3.6.0-jdk-8-alpine'
+            args '-v /root/.m2/repository:/root/.m2/repository'
+            reuseNode true
+            }
+          }
+          steps{
+            sh 'mvn --batch-mode -V -U -e checkstyle:checkstyle pmd:pmd pmd:cpd findbugs:findbugs'
+          }
+          post{
+            always{
+              junit testResults: '**/target/surefire-reports/TEST-*.xml'
+
+              recordIssues enabledForFailure: true, tools: [mavenConsole(), java(), javaDoc()]
+              recordIssues enabledForFailure: true, tool: checkStyle(pattern: '**/target/checkstyle-result.xml')
+              recordIssues enabledForFailure: true, tool: cpd(pattern: '**/target/cpd.xml')
+              recordIssues enabledForFailure: true, tool: findBugs(pattern: '**/target/findbugsXml.xml')
+              recordIssues enabledForFailure: true, tool: pmdParser(pattern: '**/target/pmd.xml')
+            }
+          }
     }
     stage('JavaDoc') {
      agent {
@@ -146,12 +141,6 @@ pipeline {
           -Dsonar.login=b43af443b842eda3063651b5c68115cb1a7c6b87"
         }
       }
-    }
-   }
-   post {
-    always {
-     // using warning next gen plugin
-     recordIssues aggregatingResults: true, tools: [javaDoc(), checkStyle(pattern: '**/target/checkstyle-result.xml'), findBugs(pattern: '**/target/findbugsXml.xml', useRankAsPriority: true), pmdParser(pattern: '**/target/pmd.xml')]
     }
    }
   }
