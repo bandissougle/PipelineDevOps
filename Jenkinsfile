@@ -6,7 +6,7 @@ pipeline {
   // This can be http or https
   NEXUS_PROTOCOL = "http"
   // Where your Nexus is running. In my case:
-  NEXUS_URL = "6262565cf648.ngrok.io"
+  NEXUS_URL = "d25ca22b10b5.ngrok.io"
   // Repository where we will upload the artifact
   NEXUS_REPOSITORY = "maven-snapshots"
   // Jenkins credential id to authenticate to Nexus OSS
@@ -199,6 +199,7 @@ pipeline {
    agent {
     docker {
      image 'ahmed24khaled/ansible-management'
+     args '--network host'
      reuseNode true
     }
    }
@@ -219,7 +220,7 @@ pipeline {
         REPO_VERSION=$(cat tmp4) &&
 
         export APP_SRC_URL="http://${NEXUS_URL}/repository/maven-snapshots/${repoPath}/${version}/${APP_NAME}-${REPO_VERSION}.war" &&
-        ansible-playbook -v -i ./ansible_provisioning/hosts --extra-vars "host=production" ./ansible_provisioning/playbook.yml 
+        ansible-playbook -v -i ./ansible_provisioning/hosts --extra-vars "host=staging" ./ansible_provisioning/playbook.yml 
 
        '''
      }
